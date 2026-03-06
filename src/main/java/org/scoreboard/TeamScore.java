@@ -15,4 +15,6 @@ public class TeamScore {
     public void increaseScore() {
         this.score++;
     }
+
+
 }

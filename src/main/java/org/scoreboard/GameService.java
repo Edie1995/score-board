@@ -2,26 +2,52 @@ package org.scoreboard;
 
 import lombok.Getter;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 @Getter
 public class GameService {
 
-    private final ScoreBoard scoreBoard;
+    private final Set<GameResult> gameResults = new LinkedHashSet<>();
 
-    public GameService(ScoreBoard scoreBoard) {
-        this.scoreBoard = scoreBoard;
+    public GameResult startGame(String homeTeamName, String awayTeamName) {
+        var newGame = GameResult.builder()
+                .homeTeam(new TeamScore(homeTeamName))
+                .awayTeam(new TeamScore(awayTeamName))
+                .build();
+        if(isTeamAlreadyPlaying(newGame)) {
+            throw new AlreadyExistingTeamException();
+        }
+        gameResults.add(newGame);
+        return newGame;
     }
 
-    public GameResult startGame(String homeTeamName, String awayTeamName){
-        //TODO implement start game logic
-        return null;
+    public void endGame(GameResult game) {
+        gameResults.remove(game);
     }
 
-    public void endGame(GameResult game){
-        //TODO implement end game logic
+    public void updateHomeScore(GameResult game) {
+        game.homeTeam()
+                .increaseScore();
     }
 
-    public void updateScore(GameResult game, String teamName){
-        //TODO implement update score logic
+    public void updateAwayScore(GameResult game) {
+        game.awayTeam()
+                .increaseScore();
+    }
+
+    public Set<GameResult> getSummaryByTotalPoints(){
+        return gameResults;
+    }
+
+    private boolean isTeamAlreadyPlaying(GameResult game) {
+        var allTeams = gameResults.stream()
+                .flatMap(x -> Stream.of(x.awayTeam().getTeamName(), x.homeTeam().getTeamName()))
+                .collect(Collectors.toSet());
+
+        return allTeams.contains(game.homeTeam().getTeamName()) || allTeams.contains(game.awayTeam().getTeamName());
     }
 
 }
