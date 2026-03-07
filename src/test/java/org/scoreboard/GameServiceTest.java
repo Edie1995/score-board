@@ -5,8 +5,8 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class GameServiceTest {
 
@@ -14,74 +14,88 @@ class GameServiceTest {
 
     @Test
     public void shouldAddGameResultToScoreBoard() {
+        // when
         gameService.startGame("Team A", "Team B");
-        assertEquals(1, gameService.getGameResults().size());
+        // then
+        assertEquals(1, gameService.getGameResults()
+                .size());
     }
 
     @Test
     public void shouldRemoveGameResultFromScoreBoardWhenGameFinish() {
+        // given
         var startedGame = gameService.startGame("Team A", "Team B");
-        assertEquals(1, gameService.getGameResults().size());
+        // when
         gameService.endGame(startedGame);
-        assertEquals(0, gameService.getGameResults().size());
+        // then
+        assertEquals(0, gameService.getGameResults()
+                .size());
     }
 
     @Test
     public void shouldBlockAddingTheGameWithTeamAlreadyPlaying() {
+        // given
         var startedGame = gameService.startGame("Team A", "Team B");
+        // when&then
         assertThrows(AlreadyExistingTeamException.class, () -> gameService.startGame("Team A", "Team C"));
     }
 
     @Test
-    public void shouldUpdateScoreOfTheHomeTeam() {
+    public void shouldUpdateScore() {
+        // given
         var startedGame = gameService.startGame("Team A", "Team B");
-        gameService.updateHomeScore(startedGame);
-        assertEquals(1, startedGame.homeTeam().getScore());
+        // when
+        gameService.updateGameScore(startedGame, 2, 3);
+        // then
+        assertEquals(2, startedGame.homeTeam()
+                .getScore());
+        assertEquals(3, startedGame.awayTeam()
+                .getScore());
     }
 
     @Test
-    public void shouldUpdateScoreOfTheAwayTeam() {
-        var startedGame = gameService.startGame("Team A", "Team B");
-        gameService.updateAwayScore(startedGame);
-        assertEquals(1, startedGame.awayTeam().getScore());
-    }
-
-    @Test
-    public void shouldSortDescByTotalScore(){
+    public void shouldSortDescByTotalScore() {
+        // given
         var firstGame = gameService.startGame("Team A", "Team B");
         var secondGame = gameService.startGame("Team C", "Team D");
         var thirdGame = gameService.startGame("Team E", "Team F");
-        gameService.updateAwayScore(firstGame);
-        gameService.updateAwayScore(firstGame);
-        gameService.updateAwayScore(firstGame);
-        gameService.updateAwayScore(thirdGame);
-        gameService.updateAwayScore(thirdGame);
-
         var expectedOrder = List.of(firstGame, thirdGame, secondGame);
 
+        gameService.updateGameScore(firstGame, 2, 3);
+        gameService.updateGameScore(secondGame, 2, 0);
+        gameService.updateGameScore(thirdGame, 2, 2);
+        // when
         var result = gameService.getSummaryByTotalPoints();
-
+        // then
         assertEquals(expectedOrder, new ArrayList<>(result));
 
     }
 
     @Test
-    public void shouldSortDescByNewestIfScoresEqual(){
+    public void shouldSortDescByNewestIfScoresEqual() {
+        // given
         var firstGame = gameService.startGame("Team A", "Team B");
         var secondGame = gameService.startGame("Team C", "Team D");
         var thirdGame = gameService.startGame("Team E", "Team F");
-        gameService.updateAwayScore(firstGame);
-        gameService.updateAwayScore(firstGame);
-        gameService.updateAwayScore(secondGame);
-        gameService.updateAwayScore(secondGame);
-        gameService.updateAwayScore(thirdGame);
+        var fourthGame = gameService.startGame("Team G", "Team H");
 
-        var expectedOrder = List.of(secondGame, firstGame, thirdGame);
+        var expectedOrder = List.of(secondGame, firstGame, fourthGame, thirdGame);
 
+        gameService.updateGameScore(firstGame, 3, 3);
+        gameService.updateGameScore(secondGame, 1, 5);
+        gameService.updateGameScore(thirdGame, 0, 1);
+        gameService.updateGameScore(fourthGame, 0, 1);
+        // when
         var result = gameService.getSummaryByTotalPoints();
-
+        // then
         assertEquals(expectedOrder, new ArrayList<>(result));
-
     }
 
+    @Test
+    public void shouldNotAllowNegativeScore() {
+        // given
+        var game = gameService.startGame("Team A", "Team B");
+        // when & then
+        assertThrows(NegativeScoreException.class, () -> gameService.updateGameScore(game, -1, 0));
+    }
 }

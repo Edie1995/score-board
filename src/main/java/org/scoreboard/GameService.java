@@ -2,7 +2,10 @@ package org.scoreboard;
 
 import lombok.Getter;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -17,7 +20,7 @@ public class GameService {
                 .homeTeam(new TeamScore(homeTeamName))
                 .awayTeam(new TeamScore(awayTeamName))
                 .build();
-        if(isTeamAlreadyPlaying(newGame)) {
+        if (isTeamAlreadyPlaying(newGame)) {
             throw new AlreadyExistingTeamException();
         }
         gameResults.add(newGame);
@@ -28,26 +31,34 @@ public class GameService {
         gameResults.remove(game);
     }
 
-    public void updateHomeScore(GameResult game) {
-        game.homeTeam()
-                .increaseScore();
+    public void updateGameScore(GameResult game, int homeScore, int awayScore) {
+        if (homeScore < 0 || awayScore < 0) {
+            throw new NegativeScoreException();
+        }
+        game.updateTeamScore(homeScore, awayScore);
     }
 
-    public void updateAwayScore(GameResult game) {
-        game.awayTeam()
-                .increaseScore();
-    }
-
-    public Set<GameResult> getSummaryByTotalPoints(){
-        return gameResults;
+    public List<GameResult> getSummaryByTotalPoints() {
+        var resultsList = new ArrayList<>(gameResults);
+        return resultsList.reversed()
+                .stream()
+                .sorted(Comparator.comparing(
+                        GameResult::getTotalScore,
+                        Comparator.reverseOrder())
+                )
+                .toList();
     }
 
     private boolean isTeamAlreadyPlaying(GameResult game) {
         var allTeams = gameResults.stream()
-                .flatMap(x -> Stream.of(x.awayTeam().getTeamName(), x.homeTeam().getTeamName()))
+                .flatMap(x -> Stream.of(x.awayTeam()
+                        .getTeamName(), x.homeTeam()
+                        .getTeamName()))
                 .collect(Collectors.toSet());
 
-        return allTeams.contains(game.homeTeam().getTeamName()) || allTeams.contains(game.awayTeam().getTeamName());
+        return allTeams.contains(game.homeTeam()
+                .getTeamName()) || allTeams.contains(game.awayTeam()
+                .getTeamName());
     }
 
 }

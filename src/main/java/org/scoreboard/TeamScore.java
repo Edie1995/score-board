@@ -1,20 +1,16 @@
 package org.scoreboard;
 
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
-public class TeamScore {
+class TeamScore {
     private final String teamName;
+    @Setter
     private int score;
 
     public TeamScore(String teamName) {
         this.teamName = teamName;
         this.score = 0;
     }
-
-    public void increaseScore() {
-        this.score++;
-    }
-
-
 }

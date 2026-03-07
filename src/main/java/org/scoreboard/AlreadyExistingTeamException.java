@@ -1,4 +1,4 @@
 package org.scoreboard;
 
-public class AlreadyExistingTeamException extends RuntimeException{
+public class AlreadyExistingTeamException extends RuntimeException {
 }
